@@ -60,8 +60,61 @@ def _preprocess_data(data):
     # ----------- Replace this code with your own preprocessing steps --------
     predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
     # ------------------------------------------------------------------------
+       # '''This function applies some transformations that were perfomed on the train data on the test data.
+        #    Takes in Pandas DataFrame and returns a modified DataFrame.'''
+    # remove missing values
+    feature_vector_df['Valencia_pressure'].fillna(feature_vector_df['Valencia_pressure'].mean(), inplace = True)
+    #Transforming time to numeric
+    feature_vector_df['time']=feature_vector_df['time'].astype('datetime64[ns]')
+    #Day
+    feature_vector_df['day'] = feature_vector_df['time'].dt.day
+    # month
+    feature_vector_df['month'] = feature_vector_df['time'].dt.month
+    # year
+    feature_vector_df['year'] = feature_vector_df['time'].dt.year
+    # hour
+    feature_vector_df['hour'] = feature_vector_df['time'].dt.hour
 
-    return predict_vector
+    #Dropping some columns
+    feature_vector_df =feature_vector_df.drop(['time'], axis =1, inplace=True)
+    #rearranging the order of columns
+
+    feature_vector_df = feature_vector_df[['year','month', 'day', 'hour', 'Madrid_wind_speed', 'Valencia_wind_deg', 'Bilbao_rain_1h',
+        'Valencia_wind_speed', 'Seville_humidity', 'Madrid_humidity',
+        'Bilbao_clouds_all', 'Bilbao_wind_speed', 'Seville_clouds_all',
+        'Bilbao_wind_deg', 'Barcelona_wind_speed', 'Barcelona_wind_deg',
+        'Madrid_clouds_all', 'Seville_wind_speed', 'Barcelona_rain_1h',
+        'Seville_pressure', 'Seville_rain_1h', 'Bilbao_snow_3h',
+        'Barcelona_pressure', 'Seville_rain_3h', 'Madrid_rain_1h',
+        'Barcelona_rain_3h', 'Valencia_snow_3h', 'Madrid_weather_id',
+        'Barcelona_weather_id', 'Bilbao_pressure', 'Seville_weather_id',
+        'Valencia_pressure', 'Seville_temp_max', 'Madrid_pressure',
+        'Valencia_temp_max', 'Valencia_temp', 'Bilbao_weather_id',
+        'Seville_temp', 'Valencia_humidity', 'Valencia_temp_min',
+        'Barcelona_temp_max', 'Madrid_temp_max', 'Barcelona_temp',
+        'Bilbao_temp_min', 'Bilbao_temp', 'Barcelona_temp_min',
+        'Bilbao_temp_max', 'Seville_temp_min', 'Madrid_temp', 'Madrid_temp_min']]
+    #Dealing with the dummy variables in the test data set using One hot encoding
+    feature_vector_df = pd.get_dummies(feature_vector_df, drop_first=True)
+
+    # Again we make sure that all the column names have underscores instead of whitespaces
+    feature_vector_df.columns = [col.replace(" ","_") for col in df_test.columns] 
+    # Split into features and targets
+    X = feature_vector_df.drop(['load_shortfall_3h'], axis=1)
+    y = feature_vector_df['load_shortfall_3h']
+    # Instantiate scaler and fit predictor features
+    scaler = StandardScaler()
+
+    X_scaled = scaler.fit_transform(X)
+
+
+
+
+    return X_scaled
+
+    # ------------------------------------------------------------------------
+
+    #return change_df(df_test)
 
 def load_model(path_to_model:str):
     """Adapter function to load our pretrained model into memory.
